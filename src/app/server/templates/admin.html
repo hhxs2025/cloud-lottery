@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>后台管理 - 云抽奖</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,"Microsoft YaHei",sans-serif;background:#f5f5f5;color:#333;line-height:1.6}
+    .navbar{background:#fff;padding:0 24px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;height:56px;position:sticky;top:0;z-index:100}
+    .navbar .brand{font-size:18px;font-weight:600;color:#333;font-family:"隶书","LiSu",serif;letter-spacing:2px}
+    .navbar .links a{margin-left:16px;color:#555;text-decoration:none;font-size:14px}
+    .navbar .links a:hover{color:#1890ff}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    .card{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);padding:24px;margin-bottom:24px}
+    .card h2{font-size:18px;margin-bottom:18px;font-weight:600;color:#222}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    table th,table td{padding:10px 12px;text-align:left;border-bottom:1px solid #f0f0f0}
+    table th{background:#fafafa;font-weight:600;color:#555}
+    table tr:hover td{background:#fafafa}
+    .small-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:#f0f0f0}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+    @media(max-width:800px){.grid-2{grid-template-columns:1fr}}
+    .form-row{margin-bottom:16px}
+    .form-row label{display:block;margin-bottom:6px;font-size:14px;color:#555}
+    .form-row input[type="text"],.form-row input[type="number"],.form-row input[type="color"],.form-row select{width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:4px;font-size:14px;outline:none}
+    .form-row input:focus,.form-row select:focus{border-color:#1890ff}
+    .btn{display:inline-block;padding:10px 20px;border:none;border-radius:4px;font-size:14px;cursor:pointer;text-decoration:none}
+    .btn:hover{opacity:.85}
+    .btn-primary{background:#1890ff;color:#fff}
+    .btn-danger{background:#ff4d4f;color:#fff}
+    .btn-success{background:#52c41a;color:#fff}
+    .btn-secondary{background:#f0f0f0;color:#333}
+    .alert{padding:12px 16px;border-radius:4px;margin-bottom:16px;font-size:14px}
+    .alert-success{background:#f6ffed;border:1px solid #b7eb8f;color:#389e0d}
+    .alert-error{background:#fff2f0;border:1px solid #ffccc7;color:#cf1322}
+    .inline-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+    .inline-form .form-row{flex:1;min-width:180px;margin-bottom:0}
+    .inline-form .form-row label{font-size:13px}
+    .gap-8{gap:8px}
+    .mb-16{margin-bottom:16px}
+    .text-muted{color:#888;font-size:13px}
+    .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;background:#f0f0f0;color:#555;margin-right:4px;margin-bottom:4px}
+    .tag-blue{background:#e6f7ff;color:#1890ff}
+    .tag-green{background:#f6ffed;color:#52c41a}
+    .tag-gold{background:#fffbe6;color:#faad14}
+    .link-like{color:#1890ff;cursor:pointer;text-decoration:none;font-size:13px}
+    .link-like:hover{text-decoration:underline}
+    .empty-state{text-align:center;padding:40px;color:#888;font-size:14px}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:200}
+    .modal{background:#fff;border-radius:8px;width:90%;max-width:520px;max-height:90vh;overflow:auto;padding:24px}
+    .modal h3{margin-bottom:16px}
+    .modal-footer{display:flex;justify-content:flex-end;gap:12px;margin-top:20px}
+    .hidden{display:none !important}
+    .footer{padding:16px 24px;text-align:center;font-size:13px;color:#888;background:#f5f5f5;border-top:1px solid #e8e8e8;margin-top:24px}
+    .footer a{color:#1890ff;text-decoration:none}
+  </style>
+</head>
+<body>
+<div class="navbar">
+  <div class="brand">云抽奖后台</div>
+  <div class="links">
+    <a href="." target="_blank">打开前台</a>
+    <a href="/logout">退出登录</a>
+  </div>
+</div>
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- 前台设置 -->
+  <div class="card">
+    <h2>前台设置</h2>
+    <form action="/api/config" method="post">
+      <div class="grid-2">
+        <div class="form-row">
+          <label>主标题</label>
+          <input type="text" name="title" value="{{ title }}" placeholder="年会抽奖">
+        </div>
+        <div class="form-row">
+          <label>主标题颜色</label>
+          <input type="color" name="title_color" value="{{ title_color }}">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-row">
+          <label>主标题大小 (px)</label>
+          <input type="number" name="title_size" value="{{ title_size }}" min="20" max="80">
+        </div>
+        <div class="form-row">
+          <label>主标题字体</label>
+          <select name="title_font">
+            <option value="default" {% if title_font == 'default' or not title_font %}selected{% endif %}>默认（隶书）</option>
+            <option value="kaiti" {% if title_font == 'kaiti' %}selected{% endif %}>楷体</option>
+            <option value="youyuan" {% if title_font == 'youyuan' %}selected{% endif %}>幼圆</option>
+            <option value="liushu" {% if title_font == 'liushu' %}selected{% endif %}>柳体</option>
+            <option value="caoshu" {% if title_font == 'caoshu' %}selected{% endif %}>草书</option>
+            <option value="heiti" {% if title_font == 'heiti' %}selected{% endif %}>黑体</option>
+            <option value="songti" {% if title_font == 'songti' %}selected{% endif %}>宋体</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-row">
+          <label>副标题</label>
+          <input type="text" name="subtitle" value="{{ subtitle }}" placeholder="幸运大抽奖">
+        </div>
+        <div class="form-row">
+          <label>副标题颜色</label>
+          <input type="color" name="subtitle_color" value="{{ subtitle_color }}">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-row">
+          <label>副标题大小 (px)</label>
+          <input type="number" name="subtitle_size" value="{{ subtitle_size }}" min="16" max="60">
+        </div>
+        <div class="form-row"></div>
+      </div>
+      <button type="submit" class="btn btn-primary">保存设置</button>
+    </form>
+  </div>
+
+  <!-- 导入名单 -->
+  <div class="card">
+    <h2>导入名单</h2>
+    <form action="/api/import_candidates" method="post" enctype="multipart/form-data">
+      <div class="inline-form">
+        <div class="form-row" style="flex:0 0 160px;"><label>导入方式</label><select name="action"><option value="append">追加</option><option value="replace">覆盖</option></select></div>
+        <div class="form-row"><label>选择文件（.txt 或 .xlsx）</label><input type="file" name="file" accept=".txt,.xlsx,.xls" required></div>
+        <button type="submit" class="btn btn-primary" style="margin-bottom:0;">导入</button>
+      </div>
+    </form>
+    <p class="text-muted" style="margin-top:10px;">txt 每行一个姓名；xlsx 取第一列作为姓名。</p>
+  </div>
+
+  <!-- 候选人管理 -->
+  <div class="card">
+    <h2>候选人（共 {{ candidates | length }} 人）</h2>
+    {% if candidates %}
+      <table><thead><tr><th>照片</th><th>姓名</th><th>操作</th></tr></thead><tbody>
+      {% for c in candidates %}
+        <tr><td>{% if c.photo_path %}<img class="small-avatar" src="{{ c.photo_path }}" alt="">{% else %}<span class="text-muted">无</span>{% endif %}</td><td>{{ c.name }}</td><td>
+          <form class="inline-form gap-8" action="/api/candidate/{{ c.id }}/photo" method="post" enctype="multipart/form-data" style="display:inline-flex;"><input type="file" name="photo" accept="image/*" required onchange="this.form.submit()"></form>
+          <button class="btn btn-danger" style="padding:6px 12px; font-size:13px;" onclick="deleteCandidate({{ c.id }})">删除</button>
+        </td></tr>
+      {% endfor %}
+      </tbody></table>
+    {% else %}<div class="empty-state">暂无名单，请先导入</div>{% endif %}
+  </div>
+
+  <!-- 奖项管理 -->
+  <div class="card">
+    <h2>奖项管理</h2>
+    <form id="prizeForm" class="inline-form mb-16" onsubmit="return addPrize(event)">
+      <div class="form-row"><label>奖项名称</label><input type="text" id="prizeName" placeholder="一等奖" required></div>
+      <div class="form-row"><label>奖品</label><input type="text" id="prizeDesc" placeholder="iPhone 16"></div>
+      <div class="form-row" style="flex:0 0 120px;"><label>名额</label><input type="number" id="prizeQty" value="1" min="1" required></div>
+      <button type="submit" class="btn btn-success" style="margin-bottom:0;">添加</button>
+    </form>
+    {% if prizes %}
+      <table><thead><tr><th>奖项</th><th>奖品</th><th>名额</th><th>已抽/剩余</th><th>内定人员</th><th>操作</th></tr></thead><tbody>
+      {% for p in prizes %}
+        <tr><td>{{ p.name }}</td><td>{{ p.prize_desc or '-' }}</td><td>{{ p.quantity }}</td><td><span class="tag tag-green">已抽 {{ p.winners | length }}</span><span class="tag tag-blue">剩余 {{ p.remaining }}</span></td>
+        <td>{% for pd in p.predetermined %}<span class="tag tag-gold">{{ pd.name }} <a class="link-like" onclick="removePredetermined({{ p.id }}, {{ pd.candidate_id }})">×</a></span>{% endfor %}
+          {% if candidates %}<select class="predetermined-select" data-pid="{{ p.id }}" onchange="addPredetermined(this)"><option value="">+ 添加</option>{% for c in candidates %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>{% endif %}</td>
+        <td><button class="btn btn-secondary" style="padding:6px 12px; font-size:13px;" onclick="editPrize({{ p.id }}, '{{ p.name }}', '{{ p.prize_desc or '' }}', {{ p.quantity }})">编辑</button>
+          <button class="btn btn-danger" style="padding:6px 12px; font-size:13px;" onclick="deletePrize({{ p.id }})">删除</button></td>
+      </tr>{% endfor %}
+      </tbody></table>
+    {% else %}<div class="empty-state">暂无奖项，请先添加</div>{% endif %}
+  </div>
+
+  <!-- 中奖记录 -->
+  <div class="card">
+    <h2>中奖记录</h2>
+    <button class="btn btn-danger mb-16" onclick="resetWinners()">清空所有中奖记录</button>
+    {% if winners %}<table><thead><tr><th>奖项</th><th>奖品</th><th>中奖人</th><th>顺序</th></tr></thead><tbody>
+      {% for w in winners %}<tr><td>{{ w.prize_name }}</td><td>{{ w.prize_desc or '-' }}</td><td>{{ w.name }}</td><td>{{ w.draw_order }}</td></tr>{% endfor %}
+    </tbody></table>{% else %}<div class="empty-state">暂无中奖记录</div>{% endif %}
+  </div>
+</div>
+
+<!-- 编辑奖项弹窗 -->
+<div class="modal-backdrop hidden" id="editModal"><div class="modal"><h3>编辑奖项</h3><input type="hidden" id="editId"><div class="form-row"><label>奖项名称</label><input type="text" id="editName" required></div><div class="form-row"><label>奖品</label><input type="text" id="editDesc"></div><div class="form-row"><label>名额</label><input type="number" id="editQty" min="1" required></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveEdit()">保存</button></div></div></div>
+
+<footer class="footer">开发者：晦华先生 | 联系方式：<a href="mailto:2303537063@qq.com">2303537063@qq.com</a></footer>
+
+<script>
+function addPrize(e){ e.preventDefault(); const name=document.getElementById('prizeName').value.trim(); const desc=document.getElementById('prizeDesc').value.trim(); const qty=parseInt(document.getElementById('prizeQty').value,10)||1; if(!name) return false; fetch('/api/prize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,prize_desc:desc,quantity:qty})}).then(r=>r.json()).then(data=>{if(data.success) location.reload(); else alert(data.message||'添加失败');}); return false;}
+function deletePrize(id){ if(!confirm('确定删除该奖项？')) return; fetch(`/api/prize/${id}`,{method:'DELETE'}).then(r=>r.json()).then(()=>location.reload());}
+function editPrize(id,name,desc,qty){ document.getElementById('editId').value=id; document.getElementById('editName').value=name; document.getElementById('editDesc').value=desc; document.getElementById('editQty').value=qty; document.getElementById('editModal').classList.remove('hidden');}
+function closeModal(){ document.getElementById('editModal').classList.add('hidden');}
+function saveEdit(){ const id=document.getElementById('editId').value; const name=document.getElementById('editName').value.trim(); const desc=document.getElementById('editDesc').value.trim(); const qty=parseInt(document.getElementById('editQty').value,10)||1; if(!name) return; fetch(`/api/prize/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,prize_desc:desc,quantity:qty})}).then(r=>r.json()).then(data=>{if(data.success) location.reload(); else alert(data.message||'保存失败');});}
+function addPredetermined(select){ const pid=select.dataset.pid; const cid=select.value; if(!cid) return; fetch(`/api/prize/${pid}/predetermined`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({candidate_id:cid})}).then(r=>r.json()).then(data=>{if(data.success) location.reload(); else {alert(data.message||'设置失败'); select.value='';}});}
+function removePredetermined(pid,cid){ if(!confirm('取消该内定人员？')) return; fetch(`/api/prize/${pid}/predetermined`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({candidate_id:cid})}).then(r=>r.json()).then(()=>location.reload());}
+function deleteCandidate(id){ if(!confirm('确定删除该人员？')) return; fetch(`/api/candidate/${id}`,{method:'DELETE'}).then(r=>r.json()).then(()=>location.reload());}
+function resetWinners(){ if(!confirm('确定清空所有中奖记录？')) return; fetch('/api/reset_winners',{method:'POST'}).then(r=>r.json()).then(()=>location.reload());}
+document.getElementById('editModal').addEventListener('click',function(e){ if(e.target===this) closeModal();});
+</script>
+</body>
+</html>

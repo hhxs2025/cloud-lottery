@@ -1,0 +1,14 @@
+{
+  "data-share": {
+    "shares": [
+      {
+        "name": "cloud-lottery",
+        "permission": {
+          "rw": [
+            "cloud-lottery"
+          ]
+        }
+      }
+    ]
+  }
+}

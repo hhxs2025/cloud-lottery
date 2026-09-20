@@ -1,0 +1,7 @@
+{
+  "username": "cloud-lottery",
+  "groupname": "cloud-lottery",
+  "defaults": {
+    "run-as": "package"
+  }
+}

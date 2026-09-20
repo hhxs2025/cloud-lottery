@@ -1,0 +1,20 @@
+{
+  ".url": {
+    "cloud-lottery.Application": {
+      "noDisplay": false,
+      "allUsers": false,
+      "fileTypes": [],
+      "control": {
+        "accessPerm": "editable"
+      },
+      "protocol": "http",
+      "gatewayPrefix": "",
+      "gatewaySocket": "",
+      "title": "云抽奖",
+      "icon": "images/icon_{0}.png",
+      "type": "url",
+      "port": "5670",
+      "url": "/"
+    }
+  }
+}

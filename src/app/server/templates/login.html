@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理员登录 - 云抽奖</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,"Microsoft YaHei",sans-serif;background:#e8e8e8;display:flex;flex-direction:column;min-height:100vh}
+    .login-wrap{flex:1;display:flex;align-items:center;justify-content:center}
+    .login-box{background:#fff;padding:40px 48px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.08);width:360px}
+    .login-box h1{font-size:22px;margin-bottom:24px;text-align:center;font-weight:600;font-family:"隶书","LiSu",serif;letter-spacing:4px}
+    .form-row{margin-bottom:16px}
+    .form-row label{display:block;margin-bottom:6px;font-size:14px;color:#555}
+    .form-row input{width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:4px;font-size:14px;outline:none}
+    .form-row input:focus{border-color:#1890ff}
+    .btn{display:inline-block;padding:10px 20px;border:none;border-radius:4px;font-size:14px;cursor:pointer;text-decoration:none;line-height:1.4}
+    .btn-primary{background:#1890ff;color:#fff;width:100%}
+    .btn-primary:hover{opacity:0.85}
+    .alert{padding:12px 16px;border-radius:4px;margin-bottom:16px;font-size:14px}
+    .alert-success{background:#f6ffed;border:1px solid #b7eb8f;color:#389e0d}
+    .alert-error{background:#fff2f0;border:1px solid #ffccc7;color:#cf1322}
+    .text-muted{color:#888;font-size:13px;text-align:center;margin-top:14px}
+    .footer{padding:16px 24px;text-align:center;font-size:13px;color:#888;background:#f5f5f5;border-top:1px solid #e8e8e8}
+    .footer a{color:#1890ff;text-decoration:none}
+  </style>
+</head>
+<body>
+<div class="login-wrap">
+  <form class="login-box" method="post" action="/login">
+    <h1>管理员登录</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <div class="form-row"><label>用户名</label><input type="text" name="username" value="admin" required autocomplete="off"></div>
+    <div class="form-row"><label>密码</label><input type="password" name="password" value="ynos1234" required></div>
+    <button type="submit" class="btn btn-primary">进入后台</button>
+    <p class="text-muted">默认账号 admin / admin123</p>
+  </form>
+</div>
+<footer class="footer">开发者：晦华先生 | 联系方式：<a href="mailto:2303537063@qq.com">2303537063@qq.com</a></footer>
+</body>
+</html>

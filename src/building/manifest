@@ -1,0 +1,16 @@
+appname=cloud-lottery
+version=1.0.0
+display_name=云抽奖
+desc="""一款支持名单导入、奖项设置、内定获奖人和照片滚动的飞牛 fnOS 云抽奖应用。"""
+platform=all
+source=thirdparty
+maintainer=晦华先生
+maintainer_url=2303537063@qq.com
+distributor=晦华先生
+os_min_version=1.1.3100
+ctl_stop=true
+desktop_uidir=ui
+desktop_applaunchname=cloud-lottery.Application
+service_port=5670
+checkport=true
+disable_authorization_path=false

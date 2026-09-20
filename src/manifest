@@ -1,0 +1,18 @@
+appname=cloud-lottery
+version=1.0.0
+display_name=云抽奖
+desc="""<p>一款支持名单导入、奖项设置、内定获奖人和照片滚动的飞牛 fnOS 云抽奖应用。</p><p><b>核心功能:</b></p><p><b>1.多奖项管理:</b> 支持设置多个奖项（特等奖、一二三等奖等），每个奖项独立配置名额和奖品<br><b>2.名单导入: </b>支持 .txt 或 .xlsx 格式导入候选人名单<br><b>3.候选人头像 :</b>为每位候选人上传照片，抽奖时滚动展示<br><b>4.实时抽奖</b>点击抽奖，姓名滚动动画自动揭晓中奖者<br><b>5.内定功能:</b>支持为奖项预设内定人员，抽奖时优先内定<br><b>6.中奖记录:</b>自动记录所有中奖信息，支持一键清空重置<br><b>7.前台样式</b>可自定义活动名称、标题颜色、标题字号与字体</p><br><img src="https://gitee.com/hhxs2025/fn-appstores/raw/master/server-data/previews/cloud-lottery/1.webp?raw=true" width="85%"/><img src="https://gitee.com/hhxs2025/fn-appstores/raw/master/server-data/previews/cloud-lottery/2.webp?raw=true" width="85%"/><img src="https://gitee.com/hhxs2025/fn-appstores/raw/master/server-data/previews/cloud-lottery/3.webp?raw=true" width="85%"/>"""
+platform=all
+source=thirdparty
+maintainer=晦华先生
+maintainer_url=https://gitee.com/hhxs2025/cloud-lottery
+distributor=晦华先生
+distributor_url=2303537063@qq.com
+os_min_version=1.1.3100
+ctl_stop=true
+desktop_uidir=ui
+desktop_applaunchname=cloud-lottery.Application
+service_port=5670
+checkport=true
+disable_authorization_path=false
+<img src="ui/images/2.png" width="60%"/>"""

@@ -1,0 +1,140 @@
+#!/bin/bash
+
+DEBUG_LOG="/tmp/cloud-lottery-debug.log"
+ERROR_LOG="${TRIM_TEMP_LOGFILE:-/tmp/cloud-lottery-error.log}"
+
+# 重定向所有输出到调试日志（使用固定路径，避免变量未定义）
+exec > /tmp/cloud-lottery-debug.log 2>&1
+set -x
+
+echo "=== Script invoked at $(date) with args: $@ ==="
+echo "User: $(whoami)"
+echo "PWD: $(pwd)"
+echo "Environment variables:"
+env | grep -E 'TRIM_|PORT|LOTTERY_'
+
+if [ -z "$TRIM_APPDEST" ] || [ -z "$TRIM_PKGVAR" ]; then
+    echo "ERROR: TRIM_APPDEST or TRIM_PKGVAR not set"
+    echo "Missing TRIM_APPDEST or TRIM_PKGVAR" > "$ERROR_LOG"
+    exit 1
+fi
+
+APP_ROOT="$TRIM_APPDEST"
+if [ ! -d "$APP_ROOT" ]; then
+    echo "ERROR: $APP_ROOT does not exist"
+    echo "Application root not found" > "$ERROR_LOG"
+    exit 1
+fi
+cd "$APP_ROOT" || {
+    echo "ERROR: Cannot cd to $APP_ROOT"
+    echo "Cannot change directory" > "$ERROR_LOG"
+    exit 1
+}
+echo "Working directory: $(pwd)"
+ls -la
+
+cd server || {
+    echo "ERROR: server directory not found in $APP_ROOT"
+    echo "server directory missing" > "$ERROR_LOG"
+    exit 1
+}
+echo "Now in server: $(pwd)"
+ls -la
+
+export PORT="${TRIM_SERVICE_PORT:-5670}"
+echo "PORT=$PORT"
+
+export LOTTERY_DATA_DIR="$TRIM_PKGVAR/data"
+export LOTTERY_UPLOAD_DIR="$TRIM_PKGVAR/uploads"
+mkdir -p "$LOTTERY_DATA_DIR" "$LOTTERY_UPLOAD_DIR"
+
+if [ -d "vendor" ]; then
+    export PYTHONPATH="$(pwd)/vendor:$PYTHONPATH"
+    echo "PYTHONPATH=$PYTHONPATH"
+else
+    echo "WARNING: vendor not found, using system packages"
+fi
+
+if ! command -v python3 &> /dev/null; then
+    echo "ERROR: python3 not found"
+    echo "python3 not found" > "$ERROR_LOG"
+    exit 1
+fi
+echo "Python version: $(python3 --version 2>&1)"
+
+# 优先使用 app.pyc，其次 app.py
+if [ -f "app.pyc" ]; then
+    APP_ENTRY="app.pyc"
+elif [ -f "app.py" ]; then
+    APP_ENTRY="app.py"
+else
+    echo "ERROR: Neither app.pyc nor app.py found in $(pwd)"
+    echo "Application entry missing" > "$ERROR_LOG"
+    exit 1
+fi
+echo "Using entry: $APP_ENTRY"
+
+case "$1" in
+    start)
+        echo "Starting application with $APP_ENTRY on port $PORT..."
+        nohup python3 "$APP_ENTRY" >> /tmp/cloud-lottery-debug.log 2>&1 &
+        PID=$!
+        echo $PID > "$TRIM_PKGVAR/app.pid"
+        echo "PID $PID written to $TRIM_PKGVAR/app.pid"
+        sleep 2
+        # 检查端口是否被监听（更可靠的检测）
+        if netstat -tlnp 2>/dev/null | grep -q ":${PORT}.*LISTEN"; then
+            echo "Application is listening on port $PORT."
+            exit 0
+        else
+            echo "Application failed to listen on port $PORT."
+            tail -20 /tmp/cloud-lottery-debug.log > "$ERROR_LOG"
+            echo "Process died or failed to bind port" >> "$ERROR_LOG"
+            exit 1
+        fi
+        ;;
+
+    stop)
+        echo "Stopping..."
+        if [ -f "$TRIM_PKGVAR/app.pid" ]; then
+            PID=$(cat "$TRIM_PKGVAR/app.pid")
+            kill -TERM "$PID" 2>/dev/null
+            sleep 2
+            kill -KILL "$PID" 2>/dev/null
+            rm -f "$TRIM_PKGVAR/app.pid"
+        else
+            pkill -f "python3 $APP_ENTRY" || true
+        fi
+        # 确保端口被释放
+        sleep 1
+        echo "Stopped"
+        exit 0
+        ;;
+
+    status)
+        # 检查端口监听（更准确）
+        if netstat -tlnp 2>/dev/null | grep -q ":${PORT}.*LISTEN"; then
+            echo "Application is listening on port $PORT"
+            exit 0
+        else
+            # 也检查 PID 文件作为备选
+            if [ -f "$TRIM_PKGVAR/app.pid" ]; then
+                PID=$(cat "$TRIM_PKGVAR/app.pid")
+                if kill -0 "$PID" 2>/dev/null; then
+                    echo "Process $PID exists but not listening? (may be starting)"
+                    exit 0
+                else
+                    rm -f "$TRIM_PKGVAR/app.pid"
+                fi
+            fi
+            echo "Application not running"
+            exit 3
+        fi
+        ;;
+
+    *)
+        echo "Unknown command: $1"
+        echo "Unknown command" > "$ERROR_LOG"
+        exit 1
+        ;;
+esac

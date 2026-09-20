@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,"Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#f5f7fa,#e4e8f0);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+    .container{width:100%;max-width:800px;text-align:center}
+    .title{font-size:{{ title_size }}px;font-weight:900;color:{{ title_color }};letter-spacing:6px;margin-bottom:8px;
+      {% if title_font == 'kaiti' %}font-family:"楷体","KaiTi",serif;
+      {% elif title_font == 'youyuan' %}font-family:"幼圆","YouYuan",sans-serif;
+      {% elif title_font == 'liushu' %}font-family:"华文隶书","LiSu",serif;
+      {% elif title_font == 'caoshu' %}font-family:"华文行楷","Xingkai SC",cursive;
+      {% elif title_font == 'heiti' %}font-family:"黑体","SimHei",sans-serif;
+      {% elif title_font == 'songti' %}font-family:"宋体","SimSun",serif;
+      {% else %}font-family:"隶书","LiSu","华文隶书","STLiti",serif;
+      {% endif %}
+    }
+    .subtitle{font-size:{{ subtitle_size }}px;font-weight:400;color:{{ subtitle_color }};letter-spacing:4px;margin-bottom:30px}
+    .roller-area{width:100%;height:220px;background:rgba(255,255,255,0.6);border-radius:20px;box-shadow:0 8px 40px rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:24px;border:1px solid rgba(255,255,255,0.8)}
+    .roller-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all 0.05s}
+    .roller-photo{width:100px;height:100px;border-radius:50%;object-fit:cover;margin-bottom:12px;display:none;background:#f0f0f0}
+    .roller-photo.has-photo{display:block}
+    .roller-name{font-size:56px;font-weight:800;color:#222;text-align:center}
+    .roller-inner.rolling .roller-name{animation:rollText .12s linear infinite}
+    .roller-inner.rolling .roller-photo{animation:rollText .12s linear infinite}
+    @keyframes rollText{0%{transform:translateY(100%);opacity:.5}50%{transform:translateY(0);opacity:1}100%{transform:translateY(-100%);opacity:.5}}
+    .roller-inner.stopped .roller-name{animation:none}
+    .roller-inner.stopped .roller-photo{animation:none}
+    .prize-selector{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+    .prize-tag{padding:8px 18px;background:rgba(255,255,255,0.8);border-radius:40px;cursor:pointer;font-size:14px;color:#333;border:1px solid rgba(255,255,255,0.5);transition:all .2s}
+    .prize-tag:hover{border-color:#1890ff;background:rgba(255,255,255,0.95)}
+    .prize-tag.active{border-color:#1890ff;background:#e6f7ff;color:#1890ff;font-weight:600}
+    .prize-tag.done{opacity:.4;cursor:not-allowed}
+    .draw-btn{padding:14px 56px;border:none;border-radius:60px;font-size:22px;font-weight:700;background:linear-gradient(135deg,#1890ff,#36cfc9);color:#fff;cursor:pointer;box-shadow:0 4px 20px rgba(24,144,255,0.3);transition:all .2s;margin-bottom:20px}
+    .draw-btn:hover{transform:scale(1.02);box-shadow:0 6px 30px rgba(24,144,255,0.4)}
+    .draw-btn.btn-disabled{background:#bfbfbf;cursor:not-allowed;box-shadow:none}
+    .draw-btn.btn-disabled:hover{transform:none}
+    .result-panel{width:100%;background:rgba(255,255,255,0.7);border-radius:16px;padding:16px;display:none}
+    .result-panel h3{font-size:16px;color:#333;margin-bottom:8px}
+    .winner-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;background:rgba(255,255,255,0.7);border-radius:40px;margin:4px;font-size:14px;border:1px solid #e8e8e8}
+    .winner-chip img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+    .footer{margin-top:20px;font-size:12px;color:rgba(0,0,0,0.3);letter-spacing:1px}
+    .text-muted{color:#888;font-size:13px}
+    @media(max-width:600px){.roller-area{height:180px}.roller-name{font-size:36px}.roller-photo{width:70px;height:70px}.title{font-size:32px!important}.subtitle{font-size:18px!important}.draw-btn{font-size:18px;padding:12px 36px}}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="title">{{ title }}</div>
+  <div class="subtitle">{{ subtitle }}</div>
+
+  <div class="roller-area" id="rollerArea">
+    <div class="roller-inner" id="rollerInner">
+      <img class="roller-photo" id="rollerPhoto" src="" alt="">
+      <div class="roller-name" id="rollerName">点击抽奖</div>
+    </div>
+  </div>
+
+  <div class="prize-selector" id="prizeSelector">
+    {% for p in prizes %}
+      <div class="prize-tag" data-id="{{ p.id }}" data-remaining="{{ p.remaining }}">
+        {{ p.name }}{% if p.prize_desc %} · {{ p.prize_desc }}{% endif %}
+        <span class="text-muted">（{{ p.remaining }}/{{ p.quantity }}）</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <button class="draw-btn" id="drawBtn">抽 奖</button>
+
+  <div class="result-panel" id="resultPanel">
+    <h3>🎉 中奖结果</h3>
+    <div id="winnerList"></div>
+  </div>
+
+  <div class="footer">开发者：晦华先生 | 联系方式：<a href="mailto:2303537063@qq.com" style="color:rgba(0,0,0,0.3);">2303537063@qq.com</a></div>
+</div>
+
+<script>
+window.__LOTTERY_STATE__ = { hasData: {{ 'true' if has_data else 'false' }}, prizes: {{ prizes | tojson }}, candidates: {{ candidates | tojson }} };
+(function(){
+  const state = window.__LOTTERY_STATE__ || { hasData: false, prizes: [], candidates: [] };
+  let prizes = state.prizes || [], candidates = state.candidates || [], selectedPrizeId = null, rolling = false, rollTimer = null, slowDownTimer = null, rollIndex = 0;
+  const rollerInner = document.getElementById('rollerInner'), rollerName = document.getElementById('rollerName'), rollerPhoto = document.getElementById('rollerPhoto'), drawBtn = document.getElementById('drawBtn'), prizeSelector = document.getElementById('prizeSelector'), resultPanel = document.getElementById('resultPanel'), winnerList = document.getElementById('winnerList');
+  function init(){ renderPrizeTags(); updateDrawButton(); if(!state.hasData) rollerName.textContent = '暂无数据'; loadState(); }
+  async function loadState(){ try{ const res = await fetch('/api/state'); const data = await res.json(); prizes = data.prizes || []; candidates = data.candidates || []; state.hasData = data.has_data; renderPrizeTags(); renderWinners(); updateDrawButton(); }catch(e){ console.error(e); } }
+  function renderPrizeTags(){ if(!prizeSelector) return; if(!prizes.length){ prizeSelector.innerHTML = '<span class="text-muted">请在后台添加奖项</span>'; return; } prizeSelector.innerHTML = prizes.map(p => { const done = p.remaining <= 0; const active = selectedPrizeId === p.id ? 'active' : ''; const disabled = done ? 'done' : ''; return `<div class="prize-tag ${active} ${disabled}" data-id="${p.id}" data-remaining="${p.remaining}">${p.name}${p.prize_desc ? ' · ' + p.prize_desc : ''}<span class="text-muted">（${p.remaining}/${p.quantity}）</span></div>`; }).join(''); Array.from(prizeSelector.children).forEach(el => { el.addEventListener('click', () => { if(el.classList.contains('done')) return; selectedPrizeId = parseInt(el.dataset.id); renderPrizeTags(); updateDrawButton(); }); }); }
+  function updateDrawButton(){ drawBtn.classList.remove('btn-disabled'); if(!state.hasData || !candidates.length || !prizes.length){ drawBtn.textContent = '抽 奖'; drawBtn.classList.add('btn-disabled'); return; } if(!selectedPrizeId){ drawBtn.textContent = '请选择奖项'; drawBtn.classList.add('btn-disabled'); return; } const prize = prizes.find(p => p.id === selectedPrizeId); if(!prize || prize.remaining <= 0){ drawBtn.textContent = '该奖项已抽满'; drawBtn.classList.add('btn-disabled'); return; } drawBtn.textContent = rolling ? '滚动中…' : '抽 奖'; if(rolling) drawBtn.classList.add('btn-disabled'); }
+  function renderWinners(){ if(!resultPanel || !winnerList) return; const prize = prizes.find(p => p.id === selectedPrizeId); if(!prize || !prize.winners || !prize.winners.length){ resultPanel.style.display = 'none'; return; } resultPanel.style.display = 'block'; winnerList.innerHTML = prize.winners.map(w => `<span class="winner-chip">${w.photo_path ? `<img src="${w.photo_path}" alt="">` : ''}${w.name}</span>`).join(''); }
+  function showPhoto(person){
+    if(person.photo_path){
+      rollerPhoto.src = person.photo_path;
+      rollerPhoto.classList.add('has-photo');
+      rollerPhoto.style.display = 'block';
+    }else{
+      rollerPhoto.src = '';
+      rollerPhoto.classList.remove('has-photo');
+      rollerPhoto.style.display = 'none';
+    }
+  }
+  function startRoll(){ if(rolling) return; if(!state.hasData || !candidates.length || !prizes.length){ alert('请登录后台导入名单并设定奖项信息。'); return; } if(!selectedPrizeId){ alert('请先选择一个奖项'); return; } const prize = prizes.find(p => p.id === selectedPrizeId); if(!prize || prize.remaining <= 0){ alert('该奖项已抽满'); return; } rolling = true; updateDrawButton(); resultPanel.style.display = 'none'; rollerInner.classList.remove('stopped'); rollerInner.classList.add('rolling'); let speed = 60; function tick(){ const person = candidates[rollIndex % candidates.length]; rollIndex++; showPerson(person, false); rollTimer = setTimeout(tick, speed); } tick(); slowDownTimer = setTimeout(() => { slowdown(120, finishDraw); }, 2500); }
+  function slowdown(currentSpeed, callback){ if(currentSpeed > 400){ callback(); return; } const person = candidates[rollIndex % candidates.length]; rollIndex++; showPerson(person, false); clearTimeout(rollTimer); rollTimer = setTimeout(() => slowdown(currentSpeed + 60, callback), currentSpeed); }
+  function finishDraw(){ clearTimeout(rollTimer); clearTimeout(slowDownTimer); fetch(`/api/draw/${selectedPrizeId}`, { method: 'POST' }).then(r => r.json()).then(data => { rolling = false; rollerInner.classList.remove('rolling'); rollerInner.classList.add('stopped'); if(!data.success){ alert(data.message || '抽奖失败'); updateDrawButton(); return; } showPerson(data.candidate, true); loadState(); }).catch(err => { rolling = false; rollerInner.classList.remove('rolling'); rollerInner.classList.add('stopped'); console.error(err); alert('抽奖请求失败'); updateDrawButton(); }); }
+  function showPerson(person, final){ if(!person) return; rollerName.textContent = person.name; if(person.photo_path){ rollerPhoto.src = person.photo_path; rollerPhoto.classList.add('has-photo'); rollerPhoto.style.display = 'block'; } else { rollerPhoto.src = ''; rollerPhoto.classList.remove('has-photo'); rollerPhoto.style.display = 'none'; } rollerName.style.color = final ? '#1890ff' : '#222'; }
+  drawBtn.addEventListener('click', startRoll);
+  init();
+})();
+</script>
+</body>
+</html>
